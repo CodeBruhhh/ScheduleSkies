@@ -48,3 +48,5 @@ web-based travel planning tool with real-time environmental awareness and collab
 ## License
 
 (Choose an appropriate license or add later.)
+# ScheduleSkies
+Schedule Skies, a smart web-based event and travel planning application. 
