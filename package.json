@@ -1,0 +1,24 @@
+{
+  "name": "schedule-skies",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0",
+    "axios": "^1.6.0",
+    "next": "^16.1.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+    ,"react-icons": "^4.10.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "eslint": "^8.53.0",
+    "eslint-config-next": "^14.0.0"
+  }
+}

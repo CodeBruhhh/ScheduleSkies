@@ -1,0 +1,24 @@
+/* Layout for dashboard home */
+.dashboard {
+  display: flex;
+}
+
+.dashboard-content {
+  margin-left: 80px; /* sidebar width */
+  padding: 1rem 2rem;
+  flex: 1;
+}
+
+.row {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.col {
+  flex: 1;
+}
+
+.col.wide {
+  flex: 2;
+}

@@ -1,0 +1,32 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.heavy {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+}
+
+.moderate {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+}
+
+.icon {
+  margin-right: 0.5rem;
+}
+
+.text {
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.location {
+  font-size: 0.9rem;
+}
