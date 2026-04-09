@@ -15,6 +15,8 @@
 .logo img {
   width: 40px;
   height: 40px;
+  filter: grayscale(1) invert(1) brightness(5);
+  mix-blend-mode: screen;
 }
 
 .nav ul {

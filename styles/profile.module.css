@@ -1,20 +1,8 @@
-.profile_container {
-    display: flex;
-    color: #333;
-  }
-  
-  .main_content {
-    flex-grow: 1;
-    background-color: #f0f4f8;
-    min-height: 100vh;
-  }
-  
-  .profile_header {
-    margin-left: 80px; /* match sidebar width */
+.profile_header {
     position: relative;
     height: 300px;
-    background: url('/images/fort.avif') no-repeat center center/cover;
-    border-radius: 0 0 0px 0px;
+    background: url('/fort.jpg') no-repeat center center/cover;
+    background-color: #333; /* Fallback color */
     display: flex;
     align-items: center;
     padding: 0 50px;
@@ -339,4 +327,61 @@
   
   .settings_button svg {
     margin-right: 10px;
+  }
+
+  .profile_glass_body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .glass_card {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(15px);
+    padding: 25px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    color: #2c3e50;
+    flex: 1;
+  }
+
+  .glass_card h3 {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    color: #1a252f;
+  }
+
+  .glass_card h3 svg {
+    margin-right: 10px;
+    color: #76b5d9;
+  }
+
+  .glass_card .option_label {
+    font-weight: 600;
+  }
+
+  .glass_card .option_btn {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    color: #333;
+  }
+
+  .glass_card .option_active {
+    background: #6D7E99;
+    color: white;
+  }
+
+  .row_glass {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .col_glass {
+    flex: 1;
+    min-width: 300px;
   }
