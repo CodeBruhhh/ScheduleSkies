@@ -264,7 +264,7 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
-  z-index: 1000;
+  z-index: 10010;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -408,7 +408,7 @@
     border-radius: 30px; 
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     gap: 18px;
-    z-index: 9999 !important; /* High priority rendering */
+    z-index: 9999 !important; /* Keep above bottom nav when visible */
     align-items: center;
   }
 
