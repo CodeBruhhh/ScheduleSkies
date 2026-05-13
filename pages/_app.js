@@ -46,7 +46,7 @@ export default function App({ Component, pageProps }) {
   }, [isProtectedPage, router])
 
   // Hide AI assistant on login and signup pages
-  const hideAiPages = ['/', '/login', '/signup', '/auth/reset-password']
+  const hideAiPages = ['/', '/login', '/signup']
   const showAi = !hideAiPages.includes(router.pathname)
 
   if (isProtectedPage && !authChecked) {
