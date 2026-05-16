@@ -562,7 +562,7 @@ const MyEvents = () => {
 
   const openMapPickerForEvent = () => {
     try { sessionStorage.setItem(PLAN_RESTORE_STORAGE_KEY, JSON.stringify({ type: 'event', formDataSnapshot: formData, editingId })); } catch (e) {}
-    const params = new URLSearchParams({ pick: '1', from: 'event', returnTo: '/plan' });
+    const params = new URLSearchParams({ pick: '1', from: 'event', returnTo: router.pathname });
     if (formData.latitude != null && formData.longitude != null) { params.set('lat', String(formData.latitude)); params.set('lng', String(formData.longitude)); }
     if (formData.location) params.set('label', formData.location);
     router.push(`/map?${params.toString()}`);
@@ -571,7 +571,7 @@ const MyEvents = () => {
   const openMapPickerForActivity = () => {
     if (!selectedEventForItinerary) return;
     try { sessionStorage.setItem(PLAN_RESTORE_STORAGE_KEY, JSON.stringify({ type: 'activity', itineraryEventId: selectedEventForItinerary.id, activityFormSnapshot: activityForm, editingActivityId })); } catch (e) {}
-    const params = new URLSearchParams({ pick: '1', from: 'activity', returnTo: '/plan' });
+    const params = new URLSearchParams({ pick: '1', from: 'activity', returnTo: router.pathname });
     if (activityForm.latitude != null && activityForm.longitude != null) { params.set('lat', String(activityForm.latitude)); params.set('lng', String(activityForm.longitude)); }
     if (activityForm.location) params.set('label', activityForm.location);
     router.push(`/map?${params.toString()}`);
@@ -579,6 +579,7 @@ const MyEvents = () => {
 
   useEffect(() => {
     if (typeof window === 'undefined' || !userId) return;
+
     const consumeTimedMapPick = (storageKey) => {
       const raw = sessionStorage.getItem(storageKey);
       if (!raw) return null;
@@ -590,33 +591,70 @@ const MyEvents = () => {
     };
 
     const restoreRaw = sessionStorage.getItem(PLAN_RESTORE_STORAGE_KEY);
+    let restore = null;
     if (restoreRaw) {
-      try {
-        const restore = JSON.parse(restoreRaw);
-        if (restore.type === 'event') {
-          sessionStorage.removeItem(PLAN_RESTORE_STORAGE_KEY);
-          setFormData(restore.formDataSnapshot); setEditingId(restore.editingId ?? null); setIsFormOpen(true);
-        } else if (restore.type === 'activity' && restore.itineraryEventId && eventData.length > 0) {
-          const ev = eventData.find(e => e.id === restore.itineraryEventId);
-          if (ev) {
-            sessionStorage.removeItem(PLAN_RESTORE_STORAGE_KEY); setSelectedEventForItinerary(ev); setIsItineraryOpen(true);
-            setActivityForm(restore.activityFormSnapshot || initialActivityForm); setIsActivityFormOpen(true);
-            setEditingActivityId(restore.editingActivityId ?? null); fetchActivities(restore.itineraryEventId);
-          }
-        }
-      } catch { sessionStorage.removeItem(PLAN_RESTORE_STORAGE_KEY); }
+      try { restore = JSON.parse(restoreRaw); } catch {}
+    }
+
+    // 🚨 Protect against race condition: Only consume map coordinates AFTER events have fully loaded from the DB
+    if (restore?.type === 'activity' && eventData.length === 0) {
+      return; 
     }
 
     const actPick = consumeTimedMapPick(MAP_PICK_KEY_ACTIVITY);
-    if (actPick?.context === 'activity') setActivityForm(prev => ({ ...prev, location: actPick.label || prev.location, latitude: actPick.lat, longitude: actPick.lng }));
-
     const evtPick = consumeTimedMapPick(MAP_PICK_KEY_EVENT);
-    if (evtPick?.context === 'event') setFormData(prev => ({ ...prev, location: evtPick.label || prev.location, latitude: evtPick.lat, longitude: evtPick.lng }));
-
     const legacyPick = consumeTimedMapPick(MAP_PICK_LEGACY);
-    if (legacyPick) {
-      if (legacyPick.context === 'activity') setActivityForm(prev => ({ ...prev, location: legacyPick.label || prev.location, latitude: legacyPick.lat, longitude: legacyPick.lng }));
-      else if (legacyPick.context !== 'shared-activity') setFormData(prev => ({ ...prev, location: legacyPick.label || prev.location, latitude: legacyPick.lat, longitude: legacyPick.lng }));
+
+    if (restore) {
+      if (restore.type === 'event') {
+        sessionStorage.removeItem(PLAN_RESTORE_STORAGE_KEY);
+        
+        let newFormData = { ...restore.formDataSnapshot };
+        const pick = evtPick || (legacyPick?.context !== 'shared-activity' && legacyPick?.context !== 'activity' ? legacyPick : null);
+        
+        if (pick) {
+          newFormData.location = pick.label || newFormData.location;
+          newFormData.latitude = pick.lat;
+          newFormData.longitude = pick.lng;
+        }
+
+        setFormData(newFormData); 
+        setEditingId(restore.editingId ?? null); 
+        setIsFormOpen(true);
+
+      } else if (restore.type === 'activity' && restore.itineraryEventId && eventData.length > 0) {
+        const ev = eventData.find(e => String(e.id) === String(restore.itineraryEventId));
+        if (ev) {
+          sessionStorage.removeItem(PLAN_RESTORE_STORAGE_KEY); 
+          setSelectedEventForItinerary(ev); 
+          setIsItineraryOpen(true);
+
+          let newActivityForm = { ...(restore.activityFormSnapshot || initialActivityForm) };
+          const pickAct = actPick || (legacyPick?.context === 'activity' ? legacyPick : null);
+
+          if (pickAct) {
+            newActivityForm.location = pickAct.label || newActivityForm.location;
+            newActivityForm.latitude = pickAct.lat;
+            newActivityForm.longitude = pickAct.lng;
+          }
+
+          setActivityForm(newActivityForm); 
+          setIsActivityFormOpen(true);
+          setEditingActivityId(restore.editingActivityId ?? null); 
+          fetchActivities(restore.itineraryEventId);
+        }
+      }
+    } else {
+      // Fallback handlers if memory was partially cleared
+      const pickAct = actPick || (legacyPick?.context === 'activity' ? legacyPick : null);
+      if (pickAct) {
+        setActivityForm(prev => ({ ...prev, location: pickAct.label || prev.location, latitude: pickAct.lat, longitude: pickAct.lng }));
+      }
+
+      const pickEvt = evtPick || (legacyPick?.context !== 'shared-activity' && legacyPick?.context !== 'activity' ? legacyPick : null);
+      if (pickEvt) {
+        setFormData(prev => ({ ...prev, location: pickEvt.label || prev.location, latitude: pickEvt.lat, longitude: pickEvt.lng }));
+      }
     }
   }, [userId, eventData]);
 
