@@ -86,7 +86,7 @@ export default function ForecastCards({ onRawData, onCardClick }) {
               className={styles.card}
               onClick={() => onCardClick?.(rawItems[idx] ?? null)}
               style={{ cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s' }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.opacity = '0.88' }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateX(3px)'; e.currentTarget.style.opacity = '0.88' }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.opacity = '1' }}
               title="Click for full forecast"
             >
