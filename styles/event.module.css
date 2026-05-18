@@ -1159,7 +1159,7 @@
   transition: background 0.2s;
 }
 
- btnCancel:hover {
+.btnCancel:hover {
   background: #f1f5f9;
   color: #334155;
 }
@@ -1177,7 +1177,7 @@
   transition: all 0.2s;
 }
 
- btnSave:hover {
+.btnSave:hover {
   background: #62a3c7;
   transform: translateY(-1px);
 }
@@ -2210,6 +2210,11 @@
     font-size: 15px;
   }
 
+  .calHeaderRight {
+    flex: 1;
+    justify-content: flex-end;
+  }
+
   .calArrowLabel {
     display: none;
   }
@@ -2224,7 +2229,13 @@
   }
 
   .calViewToggle {
-    display: none;
+    display: flex;
+    margin-right: auto;
+  }
+
+  .calViewBtn {
+    padding: 4px 8px;
+    font-size: 10px;
   }
 
   .calWeekdays {

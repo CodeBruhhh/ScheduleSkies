@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import { getLocationWithFallback } from "@/lib/getLocation";
@@ -31,6 +31,7 @@ const PLAN_RESTORE_STORAGE_KEY = 'scheduleSkies_planRestore';
 const MyEvents = () => {
   // --- 1. DATA STATE ---
   const [eventData, setEventData] = useState([]);
+  const [allActivities, setAllActivities] = useState([]);
   const [userId, setUserId] = useState(null);
   const router = useRouter();
 
@@ -343,6 +344,26 @@ const MyEvents = () => {
     };
     fetchWeather();
   }, []);
+
+  // Fetch all activities when calendar is opened in activities view mode
+  useEffect(() => {
+    const fetchAllActivitiesForCalendar = async () => {
+      if (eventData.length === 0) return;
+      const eventIds = eventData.map(e => e.id);
+      const { data, error } = await supabase
+        .from('itinerary_activities')
+        .select('*')
+        .in('event_id', eventIds);
+        
+      if (data && !error) {
+        setAllActivities(data);
+      }
+    };
+
+    if (isCalendarOpen && calViewMode === 'activities') {
+      fetchAllActivitiesForCalendar();
+    }
+  }, [isCalendarOpen, calViewMode, eventData]);
 
   useEffect(() => {
     if (!userId) return;
@@ -1112,8 +1133,9 @@ const MyEvents = () => {
     return { dateStr, startTime, endTime };
   };
 
-  const getEventCalendarDate = (event) => {
-    return event.date || (event.start_datetime ? event.start_datetime.split('T')[0] : null);
+  const getEventCalendarDate = (item, isActivity = false) => {
+    if (isActivity) return item.start_time ? item.start_time.split('T')[0] : null;
+    return item.date || (item.start_datetime ? item.start_datetime.split('T')[0] : null);
   };
 
   const moveEventToDate = async (event, targetDate) => {
@@ -1148,7 +1170,7 @@ const MyEvents = () => {
     if (!draggedEventId) return;
     const event = eventData.find(ev => String(ev.id) === String(draggedEventId));
     if (!event) return;
-    const currentDateStr = getEventCalendarDate(event);
+    const currentDateStr = getEventCalendarDate(event, false);
     if (currentDateStr === dateStr) {
       handleDragEnd();
       return;
@@ -1162,7 +1184,7 @@ const MyEvents = () => {
     const grouped = {};
 
     eventData.forEach(event => {
-      const date = getEventCalendarDate(event);
+      const date = getEventCalendarDate(event, false);
       if (!date) return;
       if (!grouped[date]) grouped[date] = [];
       grouped[date].push(event);
@@ -1170,20 +1192,20 @@ const MyEvents = () => {
 
     Object.values(grouped).forEach(events => {
       const sorted = [...events].sort((a, b) => {
-        const aTime = a.start_datetime ? new Date(a.start_datetime) : new Date(`${getEventCalendarDate(a)}T00:00:00`);
-        const bTime = b.start_datetime ? new Date(b.start_datetime) : new Date(`${getEventCalendarDate(b)}T00:00:00`);
+        const aTime = a.start_datetime ? new Date(a.start_datetime) : new Date(`${getEventCalendarDate(a, false)}T00:00:00`);
+        const bTime = b.start_datetime ? new Date(b.start_datetime) : new Date(`${getEventCalendarDate(b, false)}T00:00:00`);
         return aTime - bTime;
       });
 
       for (let i = 0; i < sorted.length; i++) {
         const a = sorted[i];
-        const aStart = a.start_datetime ? new Date(a.start_datetime) : new Date(`${getEventCalendarDate(a)}T00:00:00`);
-        const aEnd = a.end_datetime ? new Date(a.end_datetime) : new Date(`${getEventCalendarDate(a)}T23:59:59`);
+        const aStart = a.start_datetime ? new Date(a.start_datetime) : new Date(`${getEventCalendarDate(a, false)}T00:00:00`);
+        const aEnd = a.end_datetime ? new Date(a.end_datetime) : new Date(`${getEventCalendarDate(a, false)}T23:59:59`);
 
         for (let j = i + 1; j < sorted.length; j++) {
           const b = sorted[j];
-          const bStart = b.start_datetime ? new Date(b.start_datetime) : new Date(`${getEventCalendarDate(b)}T00:00:00`);
-          const bEnd = b.end_datetime ? new Date(b.end_datetime) : new Date(`${getEventCalendarDate(b)}T23:59:59`);
+          const bStart = b.start_datetime ? new Date(b.start_datetime) : new Date(`${getEventCalendarDate(b, false)}T00:00:00`);
+          const bEnd = b.end_datetime ? new Date(b.end_datetime) : new Date(`${getEventCalendarDate(b, false)}T23:59:59`);
 
           if (aEnd > bStart && aStart < bEnd) {
             conflictIds.add(a.id);
@@ -1208,12 +1230,18 @@ const MyEvents = () => {
     const cellDays = [];
     let day = startDate;
 
+    const isActivityView = calViewMode === 'activities';
+
     while (day <= endDate) {
       const cloneDay = day;
       const dateStr = format(cloneDay, 'yyyy-MM-dd');
-      const dayEvents = eventData.filter(e => getEventCalendarDate(e) === dateStr);
-      const hasEvent = dayEvents.length > 0;
-      const hasConflict = dayEvents.some(ev => calendarConflictEventIds.has(ev.id));
+      
+      const dayItems = isActivityView
+        ? allActivities.filter(a => getEventCalendarDate(a, true) === dateStr)
+        : eventData.filter(e => getEventCalendarDate(e, false) === dateStr);
+
+      const hasItem = dayItems.length > 0;
+      const hasConflict = !isActivityView && dayItems.some(ev => calendarConflictEventIds.has(ev.id));
       const isCurrentMonth = isSameMonth(cloneDay, monthStart);
       const isCurrentDay = isToday(cloneDay);
       const isSelected = selectedCalDate === dateStr;
@@ -1223,9 +1251,9 @@ const MyEvents = () => {
           key={cloneDay.toString()}
           className={`${styles.calCell} ${isSelected ? styles.calCellSelected : ''}`}
           onClick={() => setSelectedCalDate(prev => prev === dateStr ? null : dateStr)}
-          onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleDropOnDate(dateStr); }}
-          onDragOver={(e) => { e.preventDefault(); setDragOverDate(dateStr); }}
-          onDragLeave={() => setDragOverDate(null)}
+          onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if(!isActivityView) handleDropOnDate(dateStr); }}
+          onDragOver={(e) => { e.preventDefault(); if(!isActivityView) setDragOverDate(dateStr); }}
+          onDragLeave={() => { if(!isActivityView) setDragOverDate(null); }}
           style={{
             opacity: isCurrentMonth ? 1 : 0.35,
             backgroundColor: isSelected
@@ -1234,7 +1262,7 @@ const MyEvents = () => {
                 ? 'rgba(118, 181, 217, 0.2)'
                 : hasConflict
                   ? 'rgba(248, 113, 113, 0.12)'
-                  : hasEvent
+                  : hasItem
                     ? 'rgba(94, 224, 147, 0.08)'
                     : '#1a1a1a',
             border: isSelected
@@ -1243,7 +1271,7 @@ const MyEvents = () => {
                 ? '2px dashed #76b5d9'
                 : hasConflict
                   ? '1px solid #EF4444'
-                  : hasEvent
+                  : hasItem
                     ? '1px solid rgba(94, 224, 147, 0.3)'
                     : '1px solid transparent',
             cursor: 'pointer',
@@ -1263,41 +1291,51 @@ const MyEvents = () => {
               fontWeight: 'bold',
               margin: '0 auto 4px auto',
               fontSize: '12px',
-            } : hasEvent ? { fontWeight: 'bold', color: '#76b5d9' } : {}}
+            } : hasItem ? { fontWeight: 'bold', color: '#76b5d9' } : {}}
           >
             {format(cloneDay, 'd')}
           </span>
           <div className={styles.calEventsContainer}>
-            {dayEvents.slice(0, 3).map(ev => {
-              const eventTime = ev.start_datetime ? formatTime(ev.start_datetime) : '';
-              const isConflict = calendarConflictEventIds.has(ev.id);
+            {dayItems.slice(0, 3).map(item => {
+              const title = isActivityView ? item.activity_name : item.title;
+              const startTime = isActivityView ? item.start_time : item.start_datetime;
+              const itemTime = startTime ? formatTime(startTime) : '';
+              const parentEvent = isActivityView ? eventData.find(e => e.id === item.event_id) : item;
+              const color = parentEvent?.typeColor || (isActivityView ? '#8B5CF6' : '#76b5d9');
+              const isConflict = !isActivityView && calendarConflictEventIds.has(item.id);
+
               return (
                 <div
-                  key={ev.id}
+                  key={item.id}
                   className={styles.calEventPill}
-                  draggable
+                  draggable={!isActivityView}
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsCalendarOpen(false);
-                    handleOpenItinerary(ev);
+                    if (parentEvent) handleOpenItinerary(parentEvent);
                   }}
-                  onDragStart={(e) => { e.dataTransfer.setData('text/plain', ev.id); handleDragStart(ev.id); }}
-                  onDragEnd={handleDragEnd}
+                  onDragStart={(e) => {
+                    if (!isActivityView) {
+                      e.dataTransfer.setData('text/plain', item.id);
+                      handleDragStart(item.id);
+                    }
+                  }}
+                  onDragEnd={isActivityView ? undefined : handleDragEnd}
                   style={{
-                    backgroundColor: isConflict ? '#EF4444' : (ev.typeColor || '#76b5d9'),
+                    backgroundColor: isConflict ? '#EF4444' : color,
                     color: isConflict ? '#fff' : '#111',
                     border: isConflict ? '1px solid #DC2626' : undefined,
                     cursor: 'pointer',
                   }}
-                  title={`${ev.title}${eventTime ? ` · ${eventTime}` : ''} — Click to open`}
+                  title={`${title}${itemTime ? ` · ${itemTime}` : ''} — Click to open`}
                 >
                   <span className={styles.calPillDot} style={{ backgroundColor: isConflict ? '#fff' : '#111' }}></span>
-                  {ev.title}
+                  {title}
                 </div>
               );
             })}
-            {dayEvents.length > 3 && (
-              <div className={styles.calMoreLabel}>+{dayEvents.length - 3} more</div>
+            {dayItems.length > 3 && (
+              <div className={styles.calMoreLabel}>+{dayItems.length - 3} more</div>
             )}
           </div>
         </div>
@@ -2458,7 +2496,12 @@ const MyEvents = () => {
                   >
                     📅 Events
                   </button>
-
+                  <button
+                    className={`${styles.calViewBtn} ${calViewMode === 'activities' ? styles.calViewBtnActive : ''}`}
+                    onClick={() => setCalViewMode('activities')}
+                  >
+                    📋 Activities
+                  </button>
                 </div>
                 <button className={styles.calCloseBtn} onClick={() => setIsCalendarOpen(false)}>✕</button>
               </div>
@@ -2494,7 +2537,10 @@ const MyEvents = () => {
 
             {/* Detail Panel — shows when a date is selected */}
             {selectedCalDate && (() => {
-              const selectedEvents = eventData.filter(e => getEventCalendarDate(e) === selectedCalDate);
+              const isActivityView = calViewMode === 'activities';
+              const selectedItems = isActivityView
+                ? allActivities.filter(a => getEventCalendarDate(a, true) === selectedCalDate)
+                : eventData.filter(e => getEventCalendarDate(e, false) === selectedCalDate);
               const formattedDate = new Date(selectedCalDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
               return (
@@ -2503,7 +2549,7 @@ const MyEvents = () => {
                     <div>
                       <div className={styles.calDetailDate}>{formattedDate}</div>
                       <div className={styles.calDetailCount}>
-                        {selectedEvents.length} event{selectedEvents.length !== 1 ? 's' : ''}
+                        {selectedItems.length} {isActivityView ? 'activit' + (selectedItems.length !== 1 ? 'ies' : 'y') : 'event' + (selectedItems.length !== 1 ? 's' : '')}
                       </div>
                     </div>
                     <button
@@ -2512,55 +2558,70 @@ const MyEvents = () => {
                     >✕</button>
                   </div>
 
-                  {selectedEvents.length === 0 ? (
+                  {selectedItems.length === 0 ? (
                     <div className={styles.calDetailEmpty}>
-                      <span>📭</span> No events on this date
+                      <span>📭</span> No {isActivityView ? 'activities' : 'events'} on this date
                     </div>
                   ) : (
                     <div className={styles.calDetailList}>
-                      {selectedEvents.map(ev => {
-                        const evTime = ev.start_datetime ? formatTime(ev.start_datetime) : '';
-                        const evEndTime = ev.end_datetime ? formatTime(ev.end_datetime) : '';
-                        const isConflict = calendarConflictEventIds.has(ev.id);
+                      {selectedItems.map(item => {
+                        const title = isActivityView ? item.activity_name : item.title;
+                        const startTime = isActivityView ? item.start_time : item.start_datetime;
+                        const endTime = isActivityView ? item.end_time : item.end_datetime;
+                        const itemTime = startTime ? formatTime(startTime) : '';
+                        const itemEndTime = endTime ? formatTime(endTime) : '';
+                        const parentEvent = isActivityView ? eventData.find(e => e.id === item.event_id) : item;
+                        const color = parentEvent?.typeColor || (isActivityView ? '#8B5CF6' : '#76b5d9');
+                        const isConflict = !isActivityView && calendarConflictEventIds.has(item.id);
+
                         return (
-                          <div key={ev.id} className={`${styles.calDetailItem} ${isConflict ? styles.calDetailConflict : ''}`}>
+                          <div key={item.id} className={`${styles.calDetailItem} ${isConflict ? styles.calDetailConflict : ''}`}>
                             <div
                               className={styles.calDetailColor}
-                              style={{ backgroundColor: isConflict ? '#EF4444' : (ev.typeColor || '#76b5d9') }}
+                              style={{ backgroundColor: isConflict ? '#EF4444' : color }}
                             ></div>
                             <div className={styles.calDetailInfo}>
-                              <div className={styles.calDetailTitle}>{ev.title}</div>
+                              <div className={styles.calDetailTitle}>{title}</div>
                               <div className={styles.calDetailMeta}>
-                                {evTime && <span>🕐 {evTime}{evEndTime ? ` – ${evEndTime}` : ''}</span>}
-                                {ev.location && <span>📍 {ev.location.split(',')[0]}</span>}
-                                {ev.category && <span className={styles.calDetailCat} style={{ background: (ev.typeColor || '#76b5d9') + '22', color: ev.typeColor || '#76b5d9' }}>{ev.category}</span>}
+                                {itemTime && <span>🕐 {itemTime}{itemEndTime ? ` – ${itemEndTime}` : ''}</span>}
+                                {item.location && <span>📍 {item.location.split(',')[0]}</span>}
+                                {!isActivityView && item.category && <span className={styles.calDetailCat} style={{ background: color + '22', color: color }}>{item.category}</span>}
                                 {isConflict && <span className={styles.calDetailConflictBadge}>⚠️ Conflict</span>}
                               </div>
                             </div>
                             <div className={styles.calDetailActions}>
                               <button
                                 className={styles.calDetailBtn}
-                                onClick={() => { setIsCalendarOpen(false); handleOpenItinerary(ev); }}
+                                onClick={() => { setIsCalendarOpen(false); if(parentEvent) handleOpenItinerary(parentEvent); }}
                                 title="Open Itinerary"
                               >
                                 📋
                               </button>
-                              {(ev.latitude && ev.longitude) && (
+                              {(item.latitude && item.longitude) && (
                                 <button
                                   className={styles.calDetailBtn}
-                                  onClick={() => { setIsCalendarOpen(false); handleNavigateToVenue(ev); }}
+                                  onClick={() => { 
+                                    setIsCalendarOpen(false); 
+                                    if(isActivityView) {
+                                      router.push(`/map?lat=${item.latitude}&lng=${item.longitude}&label=${encodeURIComponent(item.location)}`);
+                                    } else {
+                                      handleNavigateToVenue(item); 
+                                    }
+                                  }}
                                   title="Navigate"
                                 >
                                   🧭
                                 </button>
                               )}
-                              <button
-                                className={styles.calDetailBtn}
-                                onClick={() => { setIsCalendarOpen(false); setSelectedEventForBudget(ev); setIsBudgetOpen(true); }}
-                                title="Budget"
-                              >
-                                💰
-                              </button>
+                              {!isActivityView && (
+                                <button
+                                  className={styles.calDetailBtn}
+                                  onClick={() => { setIsCalendarOpen(false); setSelectedEventForBudget(item); setIsBudgetOpen(true); }}
+                                  title="Budget"
+                                >
+                                  💰
+                                </button>
+                              )}
                             </div>
                           </div>
                         );
