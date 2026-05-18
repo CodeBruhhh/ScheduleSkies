@@ -581,6 +581,7 @@ const AnimatedPolyline = ({ positions, pathOptions, shouldAnimate }) => {
 
 const MapScreen = ({
   venueCoords,
+  originCoords,
   itineraryWaypoints,
   searchLabel,
   pickMode = false,
@@ -666,6 +667,30 @@ const MapScreen = ({
       setFlyTo([venueDest.lat, venueDest.lng]);
     }
   }, [venueCoords]);
+
+  useEffect(() => {
+    if (originCoords?.lat && originCoords?.lng) {
+      const trafficOrigin = {
+        lat: originCoords.lat,
+        lng: originCoords.lng,
+        label: originCoords.label || 'Incident start',
+      };
+
+      setOrigin(trafficOrigin);
+      setOriginText(trafficOrigin.label);
+
+      // If user location not known yet, center map here first
+      if (!userLocation) {
+        setFlyTo([trafficOrigin.lat, trafficOrigin.lng]);
+      }
+    }
+  }, [originCoords]);
+
+  useEffect(() => {
+    if (!origin || !destination) return;
+
+    fetchRoute(origin, destination, routeMode);
+  }, [origin, destination, routeMode]);
 
   useEffect(() => { if (searchLabel) setDestText(searchLabel); }, [searchLabel]);
 

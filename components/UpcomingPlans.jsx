@@ -3,11 +3,17 @@ import styles from '../styles/upcoming.module.css'
 import { FaMapMarkerAlt } from 'react-icons/fa'
 import { supabase } from '../lib/supabaseClient';
 import { getLocationWithFallback } from '../lib/getLocation';
+import { useRouter } from 'next/router';
 
 export default function UpcomingPlans({ plans = [] }) {
+  const router = useRouter();
   const [eventData, setEventData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
+
+  function handleEventClick(event) {
+    router.push(`/plan?eventId=${event.id}`);
+  }
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -94,7 +100,11 @@ export default function UpcomingPlans({ plans = [] }) {
             const distance = getEventDistance(event);
             const { date, time } = formatDateTime(event.start_datetime);
             return (
-              <li key={event.id} className={styles.plan}>
+              <li
+                key={event.id}
+                className={`${styles.plan} ${styles.planClickable}`}
+                onClick={() => handleEventClick(event)}
+              >
                 <div className={styles.event}>
                   <div className={styles.date_and_time}>
                     <div className={styles.date}>{date}</div>

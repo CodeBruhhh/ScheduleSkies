@@ -81,6 +81,38 @@
   font-size: 0.75rem;
 }
 
+.clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  position: relative;
+}
+ 
+.clickable:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.05);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+ 
+.clickable:active {
+  transform: translateX(1px);
+  filter: brightness(0.97);
+}
+ 
+/* Map icon that appears on hover */
+.mapHint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: inherit;
+  flex-shrink: 0;
+  padding-left: 6px;
+}
+ 
+.clickable:hover .mapHint {
+  opacity: 0.65;
+}
 
 @media (max-width: 768px){
   .container {

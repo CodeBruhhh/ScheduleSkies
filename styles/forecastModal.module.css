@@ -1,0 +1,294 @@
+/* ── Overlay ─────────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* ── Sheet ───────────────────────────────────────────────────── */
+.sheet {
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 28px;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  scrollbar-width: none;
+
+  background: linear-gradient(160deg, #dceefb 0%, #eaf4fc 40%, #ffffff 100%);
+  box-shadow: 0 32px 80px rgba(44, 82, 130, 0.22), 0 0 0 1px rgba(118, 181, 217, 0.3);
+  color: #1a365d;
+}
+
+.sheet::-webkit-scrollbar { display: none; }
+
+/* ── Sticky header ───────────────────────────────────────────── */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  padding: 22px 24px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: linear-gradient(135deg, #2c5282 0%, #4396d1 55%, #76b5d9 100%);
+  border-radius: 28px 28px 0 0;
+  color: white;
+}
+
+.headerText {}
+
+.headerEyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.65;
+  margin-bottom: 3px;
+}
+
+.headerCity {
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.headerHint {
+  font-size: 11px;
+  opacity: 0.5;
+  margin-top: 3px;
+}
+
+.closeBtn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+  color: white;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover { background: rgba(255, 255, 255, 0.35); }
+
+/* ── Body ────────────────────────────────────────────────────── */
+.body {
+  padding: 14px 18px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Day card ────────────────────────────────────────────────── */
+.dayCard {
+  background: rgba(118, 181, 217, 0.1);
+  border: 1px solid rgba(118, 181, 217, 0.25);
+  border-radius: 18px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.dayCard:hover { border-color: rgba(67, 150, 209, 0.45); }
+
+/* ── Day header (button) ─────────────────────────────────────── */
+.dayHeader {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 1fr 44px 28px;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  color: #1a365d;
+  text-align: left;
+}
+
+.dayHeaderLeft {}
+
+.dayName {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1a365d;
+}
+
+.dayMeta {
+  font-size: 12px;
+  color: #4396d1;
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+.dayIcon {
+  width: 40px;
+  height: 40px;
+}
+
+.dayChevron {
+  font-size: 20px;
+  color: #76b5d9;
+  transition: transform 0.22s ease;
+  line-height: 1;
+  text-align: center;
+}
+
+.dayChevronOpen { transform: rotate(90deg); }
+
+/* ── Expanded rows container ─────────────────────────────────── */
+.rowsWrap {
+  overflow: hidden;
+  border-top: 1px solid rgba(118, 181, 217, 0.2);
+}
+
+.rowsInner {
+  padding: 4px 16px 10px;
+}
+
+/* ── Single hour row ─────────────────────────────────────────── */
+.hourRow {
+  display: grid;
+  grid-template-columns: 68px 42px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(118, 181, 217, 0.15);
+}
+
+.hourRow:last-child { border-bottom: none; }
+
+.hourTime {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4396d1;
+}
+
+.hourIcon {
+  width: 38px;
+  height: 38px;
+}
+
+.hourDetails {}
+
+.hourDesc {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: #1a365d;
+}
+
+.hourMeta {
+  display: flex;
+  gap: 10px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.hourMetaItem {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.hourTempBlock { text-align: right; }
+
+.hourTemp {
+  font-size: 19px;
+  font-weight: 900;
+  color: #1a365d;
+}
+
+.hourFeels {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ── Footer ──────────────────────────────────────────────────── */
+.footer {
+  text-align: center;
+  font-size: 11px;
+  color: #94a3b8;
+  padding: 4px 0 6px;
+}
+
+/* ── Empty state ─────────────────────────────────────────────── */
+.empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* ================================================================
+   DARK MODE
+   ================================================================ */
+[data-theme='dark'] .sheet {
+  background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .dayCard {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+[data-theme='dark'] .dayCard:hover {
+  border-color: rgba(118, 181, 217, 0.3);
+}
+
+[data-theme='dark'] .dayHeader { color: #e2e8f0; }
+
+[data-theme='dark'] .dayName { color: #e2e8f0; }
+
+[data-theme='dark'] .dayMeta { color: #76b5d9; }
+
+[data-theme='dark'] .dayChevron { color: #76b5d9; }
+
+[data-theme='dark'] .rowsWrap {
+  border-top-color: rgba(255, 255, 255, 0.07);
+}
+
+[data-theme='dark'] .hourRow {
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+
+[data-theme='dark'] .hourTime { color: #76b5d9; }
+
+[data-theme='dark'] .hourDesc { color: #cbd5e1; }
+
+[data-theme='dark'] .hourMetaItem { color: rgba(255, 255, 255, 0.45); }
+
+[data-theme='dark'] .hourTemp { color: #e2e8f0; }
+
+[data-theme='dark'] .hourFeels { color: rgba(255, 255, 255, 0.4); }
+
+[data-theme='dark'] .footer { color: rgba(255, 255, 255, 0.28); }
+
+[data-theme='dark'] .empty { color: rgba(255, 255, 255, 0.35); }
+
+/* ================================================================
+   MOBILE
+   ================================================================ */
+@media (max-width: 480px) {
+  .sheet { border-radius: 20px; }
+  .header { padding: 18px 18px 14px; border-radius: 20px 20px 0 0; }
+  .headerCity { font-size: 16px; }
+  .body { padding: 12px 12px 24px; gap: 8px; }
+  .dayHeader { padding: 12px 14px; grid-template-columns: 1fr 40px 24px; }
+  .dayName { font-size: 13px; }
+  .rowsInner { padding: 4px 12px 8px; }
+  .hourRow { grid-template-columns: 60px 36px 1fr auto; gap: 8px; }
+  .hourTemp { font-size: 16px; }
+  .hourIcon { width: 32px; height: 32px; }
+}

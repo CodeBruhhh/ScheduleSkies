@@ -89,6 +89,22 @@
   padding-left: 10px;
 }
 
+.planClickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+  border-radius: 10px;
+}
+
+.planClickable:hover {
+  background: rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
+
+.planClickable:active {
+  transform: scale(0.99);
+  opacity: 0.9;
+}
+
 @media (max-width: 425px) {
   .date, .time, .title, .location, .distance {
     font-size: 0.5rem;

@@ -34,6 +34,38 @@ const MyEvents = () => {
   const [userId, setUserId] = useState(null);
   const router = useRouter();
 
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const { eventId } = router.query;
+
+    if (eventId) {
+      const fetchEventAndOpen = async () => {
+        try {
+          // Fetch the full event row matching the ID
+          const { data: eventObject, error } = await supabase
+            .from('events')
+            .select('*')
+            .eq('id', eventId)
+            .single();
+
+          if (error) {
+            console.error("Error fetching event data:", error);
+            return;
+          }
+
+          if (eventObject) {
+            handleOpenItinerary(eventObject);
+          }
+        } catch (err) {
+          console.error("Failed to fetch event for itinerary:", err);
+        }
+      };
+
+      fetchEventAndOpen();
+    }
+  }, [router.isReady, router.query]);
+
   const generateDynamicProps = (event) => {
     let styleClass = styles.foodGreen;
     let typeColor = '#5EE093';
